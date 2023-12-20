@@ -50,7 +50,7 @@ impl Parser {
     let t = self.peek()?;
 
     match self.advance()?.kind {
-      token::TokenKind::LParen => self.composite(),
+      token::TokenKind::LParen => self.list(),
       token::TokenKind::Identifier => Some(expr::Expr::new(t.pos, expr::ExprData::Identifier(t.lexeme))),
       token::TokenKind::String => Some(expr::Expr::new(t.pos, expr::ExprData::String(t.lexeme))),
       token::TokenKind::Number => Some(expr::Expr::new(t.pos, expr::ExprData::Number(t.lexeme.parse().ok()?))),
@@ -62,21 +62,22 @@ impl Parser {
     }
   }
 
-  fn composite(&mut self) -> Option<expr::Expr> {
-    let t = self.peek()?;
-    if !matches!(self.advance()?.kind, token::TokenKind::Identifier) {
-      util::print_error(&format!("Expected identifier in composite expression, got '{}'", t.lexeme), t.pos);
-      return None;
-    }
-
+  fn list(&mut self) -> Option<expr::Expr> {
+    let pos = self.peek()?.pos;
     let mut args: Vec<expr::Expr> = Vec::new();
-    while !matches!(self.peek()?.kind, token::TokenKind::RParen) {
+
+    while !matches!(
+      match self.peek() {
+        Some(t) => t.kind,
+        None => {
+          util::print_error("Expected ')' after list", pos);
+          return None;
+        }
+    }, token::TokenKind::RParen) {
       args.push(self.expr()?);
     }
 
-    Some(expr::Expr::new(t.pos, expr::ExprData::Composite(expr::CompositeExpr {
-      name: t.lexeme,
-      args,
-    })))
+    self.advance();
+    Some(expr::Expr::new(pos, expr::ExprData::List(args)))
   }
 }

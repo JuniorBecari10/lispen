@@ -20,7 +20,7 @@ pub enum ExprData {
   Number(f64),
   String(String),
   Identifier(String),
-  Composite(CompositeExpr),
+  List(Vec<Expr>),
 }
 
 #[derive(Debug)]
