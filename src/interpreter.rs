@@ -6,6 +6,7 @@ pub enum Value {
   Number(f64),
   String(String),
   Bool(bool),
+  List(Vec<Value>),
   Nil,
 }
 
@@ -15,6 +16,16 @@ impl Display for Value {
         Value::Number(n) => write!(f, "{}", n),
         Value::String(s) => write!(f, "{}", s),
         Value::Bool(b) => write!(f, "{}", b),
+        Value::List(l) => {
+          write!(f, "(");
+
+          for i in l {
+            write!(f, "{}", i);
+          }
+
+          write!(f, ")");
+          Ok(())
+        },
         Value::Nil => write!(f, "nil"),
     }
   }
@@ -47,7 +58,7 @@ impl Interpreter {
   // ---
 
   fn execute(&mut self, expr: expr::Expr) -> Value {
-    
+
   }
 
   // ---
