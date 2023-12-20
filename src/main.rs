@@ -6,7 +6,7 @@ fn main() {
     repl();
 }
 
-fn repl() -> Option<()> {
+fn repl() {
     println!("Lispen REPL\n");
 
     loop {
@@ -14,22 +14,20 @@ fn repl() -> Option<()> {
         util::input("> ", &mut input);
 
         if input == "exit" {
-            return Some(());
+            return;
         }
 
-        process_input(input)?;
+        process_input(input);
     }
 }
 
-fn process_input(input: String) -> Option<()> {
+fn process_input(input: String) {
     let lexer_res = lexer::Lexer::new(&input).lex();
-    if lexer_res.1 { return None; }
+    if lexer_res.1 { return; }
 
     let tokens = lexer_res.0;
 
     for t in tokens {
         println!("{:?}", t);
     }
-
-    Some(())
 }

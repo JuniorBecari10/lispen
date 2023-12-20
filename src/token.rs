@@ -1,6 +1,6 @@
 use crate::util;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TokenKind {
   Identifier,
   Number,
@@ -10,7 +10,7 @@ pub enum TokenKind {
   RParen,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
   pub kind: TokenKind,
   pub lexeme: String,
