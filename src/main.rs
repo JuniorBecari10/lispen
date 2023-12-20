@@ -1,6 +1,8 @@
 mod util;
 mod token;
 mod lexer;
+mod expr;
+mod parser;
 
 fn main() {
     repl();
@@ -25,9 +27,12 @@ fn process_input(input: String) {
     let lexer_res = lexer::Lexer::new(&input).lex();
     if lexer_res.1 { return; }
 
-    let tokens = lexer_res.0;
+    let parser_res = parser::Parser::new(lexer_res.0).parse();
+    if parser_res.1 { return; }
 
-    for t in tokens {
-        println!("{:?}", t);
+    let exprs = parser_res.0;
+
+    for expr in exprs {
+        println!("{:?}", expr);
     }
 }
