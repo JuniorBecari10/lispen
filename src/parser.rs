@@ -54,6 +54,13 @@ impl Parser {
       token::TokenKind::Identifier => Some(expr::Expr::new(t.pos, expr::ExprData::Identifier(t.lexeme))),
       token::TokenKind::String => Some(expr::Expr::new(t.pos, expr::ExprData::String(t.lexeme))),
       token::TokenKind::Number => Some(expr::Expr::new(t.pos, expr::ExprData::Number(t.lexeme.parse().ok()?))),
+      token::TokenKind::Keyword => {
+        match t.lexeme.as_str() {
+          "true" => Some(expr::Expr::new(t.pos, expr::ExprData::Bool(true))),
+          "false" => Some(expr::Expr::new(t.pos, expr::ExprData::Bool(false))),
+          "nil" => Some(expr::Expr::new(t.pos, expr::ExprData::Nil)),
+        }
+      }
 
       _ => {
         util::print_error(&format!("Invalid expression: '{}'", t.lexeme), t.pos);

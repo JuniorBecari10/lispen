@@ -3,6 +3,7 @@ mod token;
 mod lexer;
 mod expr;
 mod parser;
+mod interpreter;
 
 fn main() {
     repl();
@@ -30,9 +31,5 @@ fn process_input(input: String) {
     let parser_res = parser::Parser::new(lexer_res.0).parse();
     if parser_res.1 { return; }
 
-    let exprs = parser_res.0;
-
-    for expr in exprs {
-        println!("{:?}", expr);
-    }
+    let res = interpreter::Interpreter::new(parser_res.0).interpret();
 }

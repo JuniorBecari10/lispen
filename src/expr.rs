@@ -20,11 +20,7 @@ pub enum ExprData {
   Number(f64),
   String(String),
   Identifier(String),
+  Bool(bool),
   List(Vec<Expr>),
-}
-
-#[derive(Debug)]
-pub struct CompositeExpr {
-  pub name: String,
-  pub args: Vec<Expr>,
+  Nil,
 }

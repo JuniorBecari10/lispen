@@ -66,7 +66,14 @@ impl Lexer {
 
     fn identifier(&mut self) -> Option<()> {
       while !self.is_at_end() && is_identifier(self.peek()) { self.advance(); }
-      self.add_token(token::TokenKind::Identifier);
+
+      let mut kind = token::TokenKind::Identifier;
+      
+      if is_keyword(self.slice_input()) {
+        kind = token::TokenKind::Keyword;
+      }
+
+      self.add_token(kind);
 
       Some(())
     }
@@ -172,5 +179,12 @@ fn is_identifier(c: char) -> bool {
     
     c if c.is_whitespace() => false,
     _ => true
+  }
+}
+
+fn is_keyword(s: String) -> bool {
+  match s.as_str() {
+    "true" | "false" | "nil" => true,
+    _ => false,
   }
 }
