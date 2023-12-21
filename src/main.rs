@@ -3,6 +3,7 @@ mod token;
 mod lexer;
 mod expr;
 mod parser;
+mod env;
 mod interpreter;
 
 fn main() {
@@ -31,5 +32,5 @@ fn process_input(input: String) {
     let parser_res = parser::Parser::new(lexer_res.0).parse();
     if parser_res.1 { return; }
 
-    let res = interpreter::Interpreter::new(parser_res.0).interpret();
+    interpreter::Interpreter::new(parser_res.0).interpret();
 }

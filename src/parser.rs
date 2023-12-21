@@ -50,8 +50,16 @@ impl Parser {
     let t = self.peek()?;
 
     match self.advance()?.kind {
-      token::TokenKind::LParen => self.list(),
-      token::TokenKind::Identifier => Some(expr::Expr::new(t.pos, expr::ExprData::Identifier(t.lexeme))),
+      token::TokenKind::LParen => self.list(false),
+      token::TokenKind::Identifier => {
+        if t.lexeme == "'" {
+          self.advance();
+          self.list(true)
+        }
+        else {
+          Some(expr::Expr::new(t.pos, expr::ExprData::Identifier(t.lexeme)))
+        }
+      },
       token::TokenKind::String => Some(expr::Expr::new(t.pos, expr::ExprData::String(t.lexeme))),
       token::TokenKind::Number => Some(expr::Expr::new(t.pos, expr::ExprData::Number(t.lexeme.parse().ok()?))),
       token::TokenKind::Keyword => {
@@ -59,6 +67,11 @@ impl Parser {
           "true" => Some(expr::Expr::new(t.pos, expr::ExprData::Bool(true))),
           "false" => Some(expr::Expr::new(t.pos, expr::ExprData::Bool(false))),
           "nil" => Some(expr::Expr::new(t.pos, expr::ExprData::Nil)),
+
+          k => {
+            util::print_error(&format!("Invalid keyword: '{}'", k), t.pos)?;
+            None
+          }
         }
       }
 
@@ -69,7 +82,7 @@ impl Parser {
     }
   }
 
-  fn list(&mut self) -> Option<expr::Expr> {
+  fn list(&mut self, is_quote: bool) -> Option<expr::Expr> {
     let pos = self.peek()?.pos;
     let mut args: Vec<expr::Expr> = Vec::new();
 
@@ -85,6 +98,6 @@ impl Parser {
     }
 
     self.advance();
-    Some(expr::Expr::new(pos, expr::ExprData::List(args)))
+    Some(expr::Expr::new(pos, expr::ExprData::List(args, is_quote)))
   }
 }
