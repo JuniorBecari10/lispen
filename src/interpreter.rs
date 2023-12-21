@@ -25,8 +25,12 @@ impl Display for Value {
         Value::List(l) => {
           write!(f, "(").unwrap();
 
-          for i in l {
+          for (count, i) in l.iter().enumerate() {
             write!(f, "{}", i).unwrap();
+
+            if count < l.len() - 1 {
+              write!(f, " ").unwrap();
+            }
           }
 
           write!(f, ")").unwrap();

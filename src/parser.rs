@@ -102,7 +102,7 @@ impl Parser {
       args.push(self.expr()?);
     }
 
-    self.advance();
+    self.advance(); // TODO! consume a ')' here
     Some(expr::Expr::new(pos, expr::ExprData::List(args, is_quote)))
   }
 }
