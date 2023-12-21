@@ -18,7 +18,7 @@ pub enum Value {
 
 impl Display for Value {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
-    match &*self {
+    match self {
         Value::Number(n) => write!(f, "{}", n),
         Value::String(s) => write!(f, "{}", s),
         Value::Bool(b) => write!(f, "{}", b),
@@ -62,7 +62,7 @@ impl Interpreter {
     }
 
     for expr in self.exprs.clone() {
-      if let None = self.execute(expr) {
+      if self.execute(expr).is_none() {
         break;
       }
     }
@@ -85,7 +85,7 @@ impl Interpreter {
         },
         expr::ExprData::Bool(b) => Some(Value::Bool(b)),
         expr::ExprData::List(l, is_quote) => {
-          if l.len() == 0 {
+          if l.is_empty() {
             return Some(Value::List(vec![]));
           }
 
@@ -100,7 +100,7 @@ impl Interpreter {
               };
 
               if let Value::Function { name, params, body } = function {
-
+                
               }
 
               util::print_error(&format!("Value '{}' isn't a function", &name), expr.pos);

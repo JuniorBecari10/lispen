@@ -1,18 +1,9 @@
 use std::io::{self, Write};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Position {
   pub line: usize,
   pub col: usize,
-}
-
-impl Default for Position {
-  fn default() -> Self {
-      Self {
-        line: 0,
-        col: 0,
-      }
-  }
 }
 
 pub fn input(prompt: &str, out: &mut String) {

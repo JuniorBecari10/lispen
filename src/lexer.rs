@@ -34,7 +34,7 @@ impl Lexer {
         self.start = self.current;
         self.start_pos = self.current_pos.clone();
 
-        if let None = self.token() {
+        if self.token().is_none() {
           had_error = true;
         }
       }
@@ -43,7 +43,7 @@ impl Lexer {
     }
 
     fn token(&mut self) -> Option<()> {
-      match self.advance() {
+      match self.advance()? {
         c if c.is_numeric() => self.number()?,
         '"' => self.string()?,
 
@@ -65,7 +65,7 @@ impl Lexer {
     // ---
 
     fn identifier(&mut self) -> Option<()> {
-      while !self.is_at_end() && is_identifier(self.peek()) { self.advance(); }
+      while !self.is_at_end() && is_identifier(self.peek()?) { self.advance(); }
 
       let mut kind = token::TokenKind::Identifier;
       
@@ -79,17 +79,17 @@ impl Lexer {
     }
 
     fn number(&mut self) -> Option<()> {
-      while !self.is_at_end() && self.peek().is_numeric() { self.advance(); }
+      while !self.is_at_end() && self.peek()?.is_numeric() { self.advance(); }
 
-      if self.peek() == '.' && self.peek_next().is_numeric() {
+      if self.peek()? == '.' && self.peek_next()?.is_numeric() {
         self.advance();
 
-        while self.peek().is_numeric() { self.advance(); }
+        while self.peek()?.is_numeric() { self.advance(); }
       }
 
       let slice = self.slice_input();
 
-      if let Err(_) = slice.parse::<f64>() {
+      if slice.parse::<f64>().is_err() {
         util::print_error(&format!("Invalid number literal: '{}'", slice), self.start_pos.clone());
         return None;
       }
@@ -99,8 +99,8 @@ impl Lexer {
     }
 
     fn string(&mut self) -> Option<()> {
-      while !self.is_at_end() && self.peek() != '"' {
-        if self.peek() == '\n' {
+      while !self.is_at_end() && self.peek()? != '"' {
+        if self.peek()? == '\n' {
           util::print_error("Unterminated string", self.current_pos.clone());
           return None;
         }
@@ -120,19 +120,15 @@ impl Lexer {
       self.current >= self.input.len()
     }
 
-    fn peek(&self) -> char {
-      self.input.get(self.current)
-        .cloned()
-        .unwrap_or('\0')
+    fn peek(&self) -> Option<char> {
+      self.input.get(self.current).cloned()
     }
 
-    fn peek_next(&self) -> char {
-      self.input.get(self.current + 1)
-        .cloned()
-        .unwrap_or('\0')
+    fn peek_next(&self) -> Option<char> {
+      self.input.get(self.current + 1).cloned()
     }
 
-    fn advance(&mut self) -> char {
+    fn advance(&mut self) -> Option<char> {
       let c = self.peek();
       
       self.current += 1;
@@ -183,8 +179,5 @@ fn is_identifier(c: char) -> bool {
 }
 
 fn is_keyword(s: String) -> bool {
-  match s.as_str() {
-    "true" | "false" | "nil" => true,
-    _ => false,
-  }
+  matches!(s.as_str(), "true" | "false" | "nil")
 }

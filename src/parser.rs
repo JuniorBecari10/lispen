@@ -54,6 +54,11 @@ impl Parser {
       token::TokenKind::Identifier => {
         if t.lexeme == "'" {
           self.advance();
+
+          if !matches!(self.advance()?.kind, token::TokenKind::LParen) {
+            util::print_error(&format!("Expected '(', got '{}'", self.peek()?.lexeme), t.pos)?;
+          }
+
           self.list(true)
         }
         else {
