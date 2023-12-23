@@ -29,6 +29,10 @@ fn process_input(input: String) {
     let lexer_res = lexer::Lexer::new(&input).lex();
     if lexer_res.1 { return; }
 
+    for t in &lexer_res.0 {
+        println!("{:?}", t);
+    }
+
     let parser_res = parser::Parser::new(lexer_res.0).parse();
     if parser_res.1 { return; }
 

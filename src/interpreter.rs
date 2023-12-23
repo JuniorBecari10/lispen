@@ -19,9 +19,9 @@ pub enum Value {
 impl Display for Value {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
     match self {
-        Value::Number(n) => write!(f, "{}", n),
-        Value::String(s) => write!(f, "{}", s),
-        Value::Bool(b) => write!(f, "{}", b),
+        Value::Number(n) => write!(f, "{}", *n),
+        Value::String(s) => write!(f, "{}", *s),
+        Value::Bool(b) => write!(f, "{}", *b),
         Value::List(l) => {
           write!(f, "(").unwrap();
 

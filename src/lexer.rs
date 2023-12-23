@@ -81,10 +81,10 @@ impl Lexer {
     fn number(&mut self) -> Option<()> {
       while !self.is_at_end() && self.peek()?.is_numeric() { self.advance(); }
 
-      if self.peek()? == '.' && self.peek_next()?.is_numeric() {
+      if !self.is_at_end() && self.peek()? == '.' && self.peek_next()?.is_numeric() {
         self.advance();
 
-        while self.peek()?.is_numeric() { self.advance(); }
+        while !self.is_at_end() && self.peek()?.is_numeric() { self.advance(); }
       }
 
       let slice = self.slice_input();
