@@ -12,6 +12,7 @@ fn main() {
 
 fn repl() {
     println!("Lispen REPL\n");
+    let mut env = env::Environment::new();
 
     loop {
         let mut input = String::new();
@@ -21,20 +22,16 @@ fn repl() {
             return;
         }
 
-        process_input(input);
+        process_input(input, &mut env);
     }
 }
 
-fn process_input(input: String) {
+fn process_input(input: String, env: &mut env::Environment) {
     let lexer_res = lexer::Lexer::new(&input).lex();
     if lexer_res.1 { return; }
-
-    for t in &lexer_res.0 {
-        println!("{:?}", t);
-    }
 
     let parser_res = parser::Parser::new(lexer_res.0).parse();
     if parser_res.1 { return; }
 
-    interpreter::Interpreter::new(parser_res.0).interpret();
+    interpreter::Interpreter::new(parser_res.0, env).interpret();
 }

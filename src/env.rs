@@ -25,6 +25,14 @@ impl Environment {
 
   // ---
 
+  pub fn define_variable(&mut self, name: String, value: interpreter::Value) {
+    self.values.insert(name, value);
+    
+    for (k, v) in self.values.iter() {
+      println!("{}: {}", k, v);
+    }
+  }
+
   pub fn get_variable(&self, name: &str) -> Option<interpreter::Value> {
     let res = self.values.get(name).cloned();
 

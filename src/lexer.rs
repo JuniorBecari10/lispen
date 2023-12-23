@@ -179,5 +179,5 @@ fn is_identifier(c: char) -> bool {
 }
 
 fn is_keyword(s: String) -> bool {
-  matches!(s.as_str(), "true" | "false" | "nil")
+  matches!(s.as_str(), "let" | "fn" | "true" | "false" | "nil")
 }

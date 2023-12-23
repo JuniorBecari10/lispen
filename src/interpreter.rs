@@ -42,16 +42,16 @@ impl Display for Value {
   }
 }
 
-pub struct Interpreter {
+pub struct Interpreter<'a> {
   exprs: Vec<expr::Expr>,
-  env: env::Environment,
+  env: &'a mut env::Environment,
 }
 
-impl Interpreter {
-  pub fn new(exprs: Vec<expr::Expr>) -> Self {
+impl<'a> Interpreter<'a> {
+  pub fn new(exprs: Vec<expr::Expr>, env: &'a mut env::Environment) -> Self {
     Self {
       exprs,
-      env: env::Environment::new(),
+      env,
     }
   }
 
@@ -88,35 +88,77 @@ impl Interpreter {
           }
         },
         expr::ExprData::Bool(b) => Some(Value::Bool(b)),
+
+        expr::ExprData::Keyword(_) => {
+          util::print_error("Keywords cannot be used as values, only as instructions, by placing them as the first argument in lists", expr.pos);
+          None
+        },
+
         expr::ExprData::List(l, is_quote) => {
           if l.is_empty() {
             return Some(Value::List(vec![]));
           }
 
-          if let expr::ExprData::Identifier(name) = l[0].data.clone() {
-            if !is_quote {
-              let function = match self.env.get_variable(&name) {
-                Some(f) => f,
-                None => {
-                  util::print_error(&format!("Variable '{}' doesn't exist in this scope", &name), expr.pos);
-                  return None;
-                }
-              };
+          match l[0].data.clone() {
+            expr::ExprData::Keyword(k) => {
+              match k.as_str() {
+                "let" => {
+                  if l.len() != 3 {
+                    util::print_error(&format!("Invalid number of arguments in 'let' expression; expected 3, got {}", l.len()), expr.pos);
+                    return None;
+                  }
+  
+                  if let expr::ExprData::Identifier(name) = l[1].data.clone() {
+                    let value = self.execute(l[2].clone())?;
+                    self.env.define_variable(name, value.clone());
 
-              if let Value::Function { name, params, body } = function {
-                
+                    return Some(value);
+                  }
+
+                  None
+                },
+  
+                "fn" => {
+                  todo!()
+                },
+  
+                kw => {
+                  util::print_error(&format!("Keyword '{}' cannot be used as instruction", kw), expr.pos);
+                  None
+                }
+              }
+            }
+
+            expr::ExprData::Identifier(name) => {
+              if !is_quote {
+                let function = match self.env.get_variable(&name) {
+                  Some(f) => f,
+                  None => {
+                    util::print_error(&format!("Variable '{}' doesn't exist in this scope", &name), expr.pos);
+                    return None;
+                  }
+                };
+  
+                if let Value::Function { name, params, body } = function {
+                  
+                }
+  
+                util::print_error(&format!("Value '{}' isn't a function", &name), expr.pos);
+                return None;
               }
 
-              util::print_error(&format!("Value '{}' isn't a function", &name), expr.pos);
+              None
+            },
+
+            _ => {
+              let mut vec = vec![];
+              for expr in l {
+                vec.push(self.execute(expr)?);
+              }
+
+              Some(Value::List(vec))
             }
           }
-
-          let mut vec = vec![];
-          for expr in l {
-            vec.push(self.execute(expr)?);
-          }
-
-          Some(Value::List(vec))
         },
         expr::ExprData::Nil => Some(Value::Nil),
     }

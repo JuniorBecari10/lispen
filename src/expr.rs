@@ -22,5 +22,6 @@ pub enum ExprData {
   Identifier(String),
   Bool(bool),
   List(Vec<Expr>, bool),
+  Keyword(String),
   Nil,
 }

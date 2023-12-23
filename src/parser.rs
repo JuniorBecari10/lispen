@@ -53,8 +53,6 @@ impl Parser {
       token::TokenKind::LParen => self.list(false),
       token::TokenKind::Identifier => {
         if t.lexeme == "'" {
-          self.advance();
-
           if !matches!(self.advance()?.kind, token::TokenKind::LParen) {
             util::print_error(&format!("Expected '(', got '{}'", self.peek()?.lexeme), t.pos)?;
           }
@@ -73,10 +71,7 @@ impl Parser {
           "false" => Some(expr::Expr::new(t.pos, expr::ExprData::Bool(false))),
           "nil" => Some(expr::Expr::new(t.pos, expr::ExprData::Nil)),
 
-          k => {
-            util::print_error(&format!("Invalid keyword: '{}'", k), t.pos)?;
-            None
-          }
+          k => Some(expr::Expr::new(t.pos, expr::ExprData::Keyword(k.into()))),
         }
       }
 
@@ -101,8 +96,8 @@ impl Parser {
     }, token::TokenKind::RParen) {
       args.push(self.expr()?);
     }
-
-    self.advance(); // TODO! consume a ')' here
+ 
+    self.advance();
     Some(expr::Expr::new(pos, expr::ExprData::List(args, is_quote)))
   }
 }

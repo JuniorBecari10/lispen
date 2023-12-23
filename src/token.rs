@@ -1,6 +1,6 @@
 use crate::util;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TokenKind {
   Identifier,
   Number,
