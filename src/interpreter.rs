@@ -44,11 +44,11 @@ impl Display for Value {
 
 pub struct Interpreter<'a> {
   exprs: Vec<expr::Expr>,
-  env: &'a mut env::Environment,
+  env: &'a mut env::Environment<'a>,
 }
 
 impl<'a> Interpreter<'a> {
-  pub fn new(exprs: Vec<expr::Expr>, env: &'a mut env::Environment) -> Self {
+  pub fn new(exprs: Vec<expr::Expr>, env: &'a mut env::Environment<'a>) -> Self {
     Self {
       exprs,
       env,
@@ -140,7 +140,7 @@ impl<'a> Interpreter<'a> {
                 };
   
                 if let Value::Function { name, params, body } = function {
-                  
+                 //let scope = env::Environment::from_enclosing(self.env);
                 }
   
                 util::print_error(&format!("Value '{}' isn't a function", &name), expr.pos);
