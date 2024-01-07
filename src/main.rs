@@ -32,7 +32,6 @@ fn repl() {
         let new_env = interpreter.interpret();
 
         env.print_variables();
-
         env = new_env;
     }
 }

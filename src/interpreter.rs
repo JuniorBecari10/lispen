@@ -60,7 +60,7 @@ impl Interpreter {
 
     pub fn interpret(&mut self) -> env::Environment {
         if self.exprs.len() == 1 {
-            match self.execute(self.exprs[0].clone()) {
+            match self.execute(self.exprs[0].clone(), self.env.clone()) {
                 Some(res) => println!("< {}", res),
                 None => return self.env.clone(),
             }
@@ -69,7 +69,7 @@ impl Interpreter {
         }
 
         for expr in self.exprs.clone() {
-            if self.execute(expr).is_none() {
+            if self.execute(expr, self.env.clone()).is_none() {
                 break;
             }
         }
@@ -79,11 +79,13 @@ impl Interpreter {
 
     // ---
 
-    fn execute(&mut self, expr: expr::Expr) -> Option<Value> {
+    // it was necessary to disable the lint because the 'self' parameter is needed to make the associated function a method
+    #[allow(clippy::only_used_in_recursion)]
+    fn execute(&mut self, expr: expr::Expr, mut env: env::Environment) -> Option<Value> {
         match expr.data {
             expr::ExprData::Number(n) => Some(Value::Number(n)),
             expr::ExprData::String(s) => Some(Value::String(s)),
-            expr::ExprData::Identifier(i) => match self.env.get_variable(&i) {
+            expr::ExprData::Identifier(i) => match env.get_variable(&i) {
                 Some(v) => Some(v),
                 None => {
                     util::print_error(
@@ -92,6 +94,7 @@ impl Interpreter {
                     )
                 }
             },
+            
             expr::ExprData::Bool(b) => Some(Value::Bool(b)),
 
             expr::ExprData::Operator(_) => {
@@ -110,7 +113,7 @@ impl Interpreter {
                 if is_quote {
                     let mut vec = vec![];
                     for expr in l {
-                        vec.push(self.execute(expr)?);
+                        vec.push(self.execute(expr, env.clone())?);
                     }
 
                     Some(Value::List(vec))
@@ -128,8 +131,8 @@ impl Interpreter {
                                 );
                             }
 
-                            let a = self.execute(l[1].clone())?;
-                            let b = self.execute(l[2].clone())?;
+                            let a = self.execute(l[1].clone(), env.clone())?;
+                            let b = self.execute(l[2].clone(), env.clone())?;
 
                             match o.as_str() {
                                 // for now, all operators will only support 2 arguments
@@ -184,8 +187,8 @@ impl Interpreter {
                                 }
 
                                 if let expr::ExprData::Identifier(name) = l[1].data.clone() {
-                                    let value = self.execute(l[2].clone())?;
-                                    self.env.define_variable(name, value.clone());
+                                    let value = self.execute(l[2].clone(), env.clone())?;
+                                    env.define_variable(name, value.clone());
 
                                     return Some(value);
                                 }
@@ -216,10 +219,10 @@ impl Interpreter {
                                             name: name.clone(),
                                             params: string_list,
                                             body: l[3].clone(),
-                                            env: self.env.clone(),
+                                            env: env.clone(),
                                         };
 
-                                        self.env.define_variable(name, f.clone());
+                                        env.define_variable(name, f.clone());
                                         Some(f)
                                     } else {
                                         util::print_error(&format!("Invalid argument for the declaration of the function '{}'; expected a list of identifiers for the parameter list", name), expr.pos)
@@ -234,27 +237,24 @@ impl Interpreter {
                         },
 
                         expr::ExprData::Identifier(name) => {
-                            let function = match self.env.get_variable(&name) {
+                            let function = match env.get_variable(&name) {
                                 Some(f) => f,
                                 None => { return util::print_error(&format!("Variable '{}' doesn't exist in this scope", &name), expr.pos); }
                             };
 
                             if let Value::Function { name: _, params, body, env } = function {
-                                let old_env = self.env.clone();
-                                self.env = env::Environment::from_enclosing(env);
+                                let mut new_env = env::Environment::from_enclosing(env.clone());
 
                                 if l.len() - 1 != params.len() {
                                     return util::print_error(&format!("Invalid number of arguments; expected {}, got {}", params.len(), l.len()), expr.pos);
                                 }
 
                                 for (i, param) in params.iter().enumerate() {
-                                    let arg = self.execute(l[i].clone())?;
-                                    self.env.define_variable(param.into(), arg);
+                                    let arg = self.execute(l[i].clone(), env.clone())?;
+                                    new_env.define_variable(param.into(), arg);
                                 }
 
-                                let res = self.execute(body)?;
-                                self.env = old_env;
-
+                                let res = self.execute(body, new_env)?;
                                 return Some(res);
                             }
 
@@ -266,7 +266,7 @@ impl Interpreter {
                         _ => {
                             let mut vec = vec![];
                             for expr in l {
-                                vec.push(self.execute(expr)?);
+                                vec.push(self.execute(expr, env.clone())?);
                             }
 
                             Some(Value::List(vec))
