@@ -22,16 +22,17 @@ fn repl() {
             return;
         }
 
-        process_input(input, &mut env);
+        let lexer_res = lexer::Lexer::new(&input).lex();
+        if lexer_res.is_err() { continue; }
+
+        let parser_res = parser::Parser::new(lexer_res.unwrap()).parse();
+        if parser_res.is_err() { continue; }
+
+        let mut interpreter = interpreter::Interpreter::new(parser_res.unwrap(), env.clone());
+        let new_env = interpreter.interpret();
+
+        env.print_variables();
+
+        env = new_env;
     }
-}
-
-fn process_input(input: String, env: &mut env::Environment) {
-    let lexer_res = lexer::Lexer::new(&input).lex();
-    if lexer_res.1 { return; }
-
-    let parser_res = parser::Parser::new(lexer_res.0).parse();
-    if parser_res.1 { return; }
-
-    interpreter::Interpreter::new(parser_res.0, env).interpret();
 }

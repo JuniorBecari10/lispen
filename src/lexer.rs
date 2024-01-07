@@ -27,7 +27,7 @@ impl Lexer {
       }
     }
 
-    pub fn lex(&mut self) -> (Vec<token::Token>, bool) {
+    pub fn lex(&mut self) -> Result<Vec<token::Token>, ()> {
       let mut had_error = false;
       
       while !self.is_at_end() {
@@ -39,7 +39,12 @@ impl Lexer {
         }
       }
 
-      (self.tokens.clone(), had_error)
+      if had_error {
+        Err(())
+      }
+      else {
+        Ok(self.tokens.clone())
+      }
     }
 
     fn token(&mut self) -> Option<()> {
@@ -49,6 +54,11 @@ impl Lexer {
 
         '(' => self.add_token(token::TokenKind::LParen),
         ')' => self.add_token(token::TokenKind::RParen),
+
+        '+'
+        | '-'
+        | '*'
+        | '/' => self.add_token(token::TokenKind::Operator),
 
         '\n' => {
           self.current_pos.line += 1;
@@ -90,8 +100,7 @@ impl Lexer {
       let slice = self.slice_input();
 
       if slice.parse::<f64>().is_err() {
-        util::print_error(&format!("Invalid number literal: '{}'", slice), self.start_pos.clone());
-        return None;
+        return util::print_error(&format!("Invalid number literal: '{}'", slice), self.start_pos.clone());
       }
 
       self.add_token(token::TokenKind::Number);
@@ -101,8 +110,7 @@ impl Lexer {
     fn string(&mut self) -> Option<()> {
       while !self.is_at_end() && self.peek()? != '"' {
         if self.peek()? == '\n' {
-          util::print_error("Unterminated string", self.current_pos.clone());
-          return None;
+          return util::print_error("Unterminated string", self.current_pos.clone());
         }
 
         self.advance();

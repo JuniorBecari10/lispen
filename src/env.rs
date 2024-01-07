@@ -2,12 +2,13 @@ use std::collections::HashMap;
 
 use crate::interpreter;
 
-pub struct Environment<'a> {
+#[derive(Clone)]
+pub struct Environment {
   values: HashMap<String, interpreter::Value>,
-  enclosing: Option<&'a Environment<'a>>,
+  enclosing: Option<Box<Environment>>,
 }
 
-impl<'a> Environment<'a> {
+impl Environment {
   pub fn new() -> Self {
     Self {
       values: HashMap::new(),
@@ -15,28 +16,30 @@ impl<'a> Environment<'a> {
     }
   }
 
-  pub fn from_enclosing(enclosing: &'a mut Environment<'a>) -> Self {
+  pub fn from_enclosing(enclosing: Environment) -> Self {
     Self {
       values: HashMap::new(),
-      enclosing: Some(enclosing),
+      enclosing: Some(Box::new(enclosing)),
     }
   }
 
   // ---
 
-  pub fn define_variable(&mut self, name: String, value: interpreter::Value) {
-    self.values.insert(name, value);
-    
+  pub fn print_variables(&self) {
     for (k, v) in self.values.iter() {
       println!("{}: {}", k, v);
     }
+  }
+
+  pub fn define_variable(&mut self, name: String, value: interpreter::Value) {
+    self.values.insert(name, value);
   }
 
   pub fn get_variable(&self, name: &str) -> Option<interpreter::Value> {
     let res = self.values.get(name).cloned();
 
     if res.is_none() {
-      match self.enclosing {
+      match self.enclosing.clone() {
         Some(e) => e.get_variable(name),
         None => None,
       }
