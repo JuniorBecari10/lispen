@@ -15,6 +15,7 @@ pub fn input(prompt: &str, out: &mut String) {
     *out = out.trim().to_owned();
 }
 
+#[must_use="Use this to return from a function, either by using '?' or a return statement"]
 pub fn print_error<T>(message: &str, pos: Position) -> Option<T> {
     eprintln!("Error at {}:{} | {}", pos.line + 1, pos.col + 1, message);
     None

@@ -26,12 +26,9 @@ fn repl() {
         if lexer_res.is_err() { continue; }
 
         let parser_res = parser::Parser::new(lexer_res.unwrap()).parse();
-        if parser_res.is_err() { continue; }
+        if parser_res.is_err() { println!("a"); continue; }
 
-        let mut interpreter = interpreter::Interpreter::new(parser_res.unwrap(), env.clone());
-        let new_env = interpreter.interpret();
-
-        env.print_variables();
-        env = new_env;
+        let mut interpreter = interpreter::Interpreter::new(parser_res.unwrap());
+        interpreter.interpret(&mut env);
     }
 }

@@ -25,11 +25,14 @@ impl Environment {
 
   // ---
 
+  /*
+  // For debugging. Uncomment when necessary.
   pub fn print_variables(&self) {
     for (k, v) in self.values.iter() {
       println!("{}: {}", k, v);
     }
   }
+  */
 
   pub fn define_variable(&mut self, name: String, value: interpreter::Value) {
     self.values.insert(name, value);

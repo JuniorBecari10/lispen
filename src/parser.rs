@@ -68,17 +68,13 @@ impl Parser {
                     Some(expr::Expr::new(t.pos, expr::ExprData::Identifier(t.lexeme)))
                 }
             }
-            token::TokenKind::String => {
-                Some(expr::Expr::new(t.pos, expr::ExprData::String(t.lexeme)))
-            }
+            token::TokenKind::String => Some(expr::Expr::new(t.pos, expr::ExprData::String(t.lexeme))),
             token::TokenKind::Number => Some(expr::Expr::new(
                 t.pos,
                 expr::ExprData::Number(t.lexeme.parse().ok()?),
             )),
 
-            token::TokenKind::Operator => {
-                Some(expr::Expr::new(t.pos, expr::ExprData::Operator(t.lexeme)))
-            }
+            token::TokenKind::Operator => Some(expr::Expr::new(t.pos, expr::ExprData::Operator(t.lexeme))),
 
             token::TokenKind::Keyword => match t.lexeme.as_str() {
                 "true" => Some(expr::Expr::new(t.pos, expr::ExprData::Bool(true))),
@@ -103,7 +99,21 @@ impl Parser {
             },
             token::TokenKind::RParen
         ) {
-            args.push(self.expr()?);
+            let expr = self.expr()?;
+
+            if let expr::ExprData::Operator(o) = expr.data.clone() {
+                if !args.is_empty() {
+                    util::print_error(&format!("Operator '{}' cannot be used as value", o), pos.clone())?;
+                }
+            }
+
+            if let expr::ExprData::Keyword(k) = expr.data.clone() {
+                if !args.is_empty() {
+                    util::print_error(&format!("Keyword '{}' cannot be used as value", k), pos.clone())?;
+                }
+            }
+
+            args.push(expr);
         }
 
         self.advance();

@@ -55,11 +55,6 @@ impl Lexer {
         '(' => self.add_token(token::TokenKind::LParen),
         ')' => self.add_token(token::TokenKind::RParen),
 
-        '+'
-        | '-'
-        | '*'
-        | '/' => self.add_token(token::TokenKind::Operator),
-
         '\n' => {
           self.current_pos.line += 1;
           self.current_pos.col = 0;
@@ -77,14 +72,14 @@ impl Lexer {
     fn identifier(&mut self) -> Option<()> {
       while !self.is_at_end() && is_identifier(self.peek()?) { self.advance(); }
 
-      let mut kind = token::TokenKind::Identifier;
-      
-      if is_keyword(self.slice_input()) {
-        kind = token::TokenKind::Keyword;
-      }
+      let kind = match &self.slice_input() {
+        s if is_keyword(s) => token::TokenKind::Keyword,
+        s if is_operator(s) => token::TokenKind::Operator,
+
+        _ => token::TokenKind::Identifier
+      };
 
       self.add_token(kind);
-
       Some(())
     }
 
@@ -186,6 +181,10 @@ fn is_identifier(c: char) -> bool {
   }
 }
 
-fn is_keyword(s: String) -> bool {
-  matches!(s.as_str(), "let" | "fn" | "true" | "false" | "nil")
+fn is_keyword(s: &str) -> bool {
+  matches!(s, "let" | "fn" | "defn" | "if" | "true" | "false" | "nil")
+}
+
+fn is_operator(s: &str) -> bool {
+  matches!(s, "+" | "-" | "*" | "/" | ">" | ">=" | "<" | "<=" | "=" | "!=")
 }
