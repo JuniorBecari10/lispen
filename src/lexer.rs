@@ -182,7 +182,7 @@ fn is_identifier(c: char) -> bool {
 }
 
 fn is_keyword(s: &str) -> bool {
-  matches!(s, "let" | "fn" | "defn" | "if" | "true" | "false" | "nil")
+  matches!(s, "set" | "fn" | "defn" | "if" | "while" | "true" | "false" | "nil")
 }
 
 fn is_operator(s: &str) -> bool {
