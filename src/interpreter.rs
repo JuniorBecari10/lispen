@@ -3,16 +3,25 @@ use std::fmt::{Display, Formatter};
 use crate::{env, expr, util};
 
 #[derive(Clone)]
+pub enum Function {
+    UserFn {
+        params: Vec<String>,
+        body: expr::Expr,
+        env: env::Environment,
+    },
+    NativeFn {
+        arity: usize,
+        call: fn(Vec<Value>) -> Option<Value>,
+    }
+}
+
+#[derive(Clone)]
 pub enum Value {
     Number(f64),
     String(String),
     Bool(bool),
     List(Vec<Value>),
-    Function {
-        params: Vec<String>,
-        body: expr::Expr,
-        env: env::Environment,
-    },
+    Function(Function),
     Nil,
 }
 
@@ -23,7 +32,7 @@ impl Value {
             Value::String(s) => !s.is_empty(),
             Value::Bool(b) => b,
             Value::List(l) => !l.is_empty(),
-            Value::Function { params: _, body: _, env: _ } => true,
+            Value::Function(_) => true,
             Value::Nil => false
         }
     }
@@ -50,11 +59,10 @@ impl Display for Value {
                 Ok(())
             }
             Value::Nil => write!(f, "nil"),
-            Value::Function {
-                params: _,
-                body: _,
-                env: _,
-            } => write!(f, "<fn>"),
+            Value::Function(fun) => match *fun {
+                Function::UserFn { params: _, body: _, env: _ } => write!(f, "<fn>"),
+                Function::NativeFn { arity: _, call: _ } => write!(f, "<native fn>"),
+            },
         }
     }
 }
@@ -207,6 +215,11 @@ fn execute(expr: expr::Expr, env: &mut env::Environment) -> Option<Value> {
                             
                             if let expr::ExprData::Identifier(name) = l[1].data.clone() {
                                 let value = execute(l[2].clone(), env)?;
+
+                                if matches!(value, Value::Function(Function::NativeFn { arity: _, call: _ })) {
+                                    return util::print_error(&format!("Cannot reassign native function '{}'", name), expr.pos);
+                                }
+
                                 env.define_variable(name, value.clone());
                                 
                                 return Some(value);
@@ -234,11 +247,11 @@ fn execute(expr: expr::Expr, env: &mut env::Environment) -> Option<Value> {
                                         }
                                     }
                                     
-                                    let f = Value::Function {
+                                    let f = Value::Function(Function::UserFn {
                                         params: string_list,
                                         body: l[3].clone(),
                                         env: env.clone(),
-                                    };
+                                    });
                                     
                                     env.define_variable(name, f.clone());
                                     Some(f)
@@ -269,11 +282,11 @@ fn execute(expr: expr::Expr, env: &mut env::Environment) -> Option<Value> {
                                     }
                                 }
                                 
-                                Some(Value::Function {
+                                Some(Value::Function(Function::UserFn {
                                     params: string_list,
                                     body: l[2].clone(),
                                     env: env.clone(),
-                                })
+                                }))
                             } else {
                                 util::print_error("Invalid argument for the definition of a function; expected a list of identifiers for the parameter list", expr.pos)
                             }
@@ -325,20 +338,36 @@ fn execute(expr: expr::Expr, env: &mut env::Environment) -> Option<Value> {
                             None => { return util::print_error(&format!("Variable '{}' doesn't exist in this scope", &name), expr.pos); }
                         };
                         
-                        if let Value::Function { params, body, env: fn_env } = function {
-                            let mut new_env = env::Environment::from_enclosing(fn_env);
-                            
-                            if l.len() - 1 != params.len() {
-                                return util::print_error(&format!("Invalid number of arguments; expected {}, got {}", params.len(), l.len()), expr.pos);
+                        if let Value::Function(fun) = function {
+                            if let Function::UserFn { params, body, env: fn_env } = fun {
+                                let mut new_env = env::Environment::from_enclosing(fn_env);
+                                
+                                if l.len() - 1 != params.len() {
+                                    return util::print_error(&format!("Invalid number of arguments; expected {}, got {}", params.len(), l.len() - 1), expr.pos);
+                                }
+                                
+                                for (i, param) in params.iter().enumerate() {
+                                    let arg = execute(l[i + 1].clone(), env)?;
+                                    new_env.define_variable(param.into(), arg.clone());
+                                }
+                                
+                                return execute(body, &mut new_env);
                             }
                             
-                            for (i, param) in params.iter().enumerate() {
-                                let arg = execute(l[i + 1].clone(), env)?;
-                                new_env.define_variable(param.into(), arg.clone());
-                            }
                             
-                            let res = execute(body, &mut new_env)?;
-                            return Some(res);
+                            if let Function::NativeFn { arity, call } = fun {
+                                if l.len() - 1 != arity {
+                                    return util::print_error(&format!("Invalid number of arguments; expected {}, got {}", arity, l.len() - 1), expr.pos);
+                                }
+
+                                let mut args: Vec<Value> = Vec::new();
+
+                                for arg in l.iter().skip(1).cloned() {
+                                    args.push(execute(arg, env)?);
+                                }
+
+                                return call(args);
+                            }
                         }
                         
                         util::print_error(&format!("Value '{}' isn't a function", &name), expr.pos)
