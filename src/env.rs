@@ -138,5 +138,16 @@ fn hashmap_with_native_fns() -> HashMap<String, Value> {
 
       Some(Value::String(input))
     } })),
+
+    ("input_num".into(), Value::Function(Function::NativeFn { arity: 1, call: |args| {
+      print!("{}", args[0]);
+
+      let mut input = String::new();
+
+      std::io::stdout().flush().unwrap();
+      std::io::stdin().read_line(&mut input).unwrap();
+
+      input.parse::<f64>().ok().map(Value::Number)
+    } })),
   ])
 }
