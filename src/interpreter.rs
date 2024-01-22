@@ -41,9 +41,9 @@ impl Value {
 impl Display for Value {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
         match self {
-            Value::Number(n) => write!(f, "{}", *n),
-            Value::String(s) => write!(f, "{}", *s),
-            Value::Bool(b) => write!(f, "{}", *b),
+            Value::Number(n) => write!(f, "{}", n),
+            Value::String(s) => write!(f, "{}", s),
+            Value::Bool(b) => write!(f, "{}", b),
             Value::List(l) => {
                 write!(f, "(").unwrap();
                 
@@ -59,7 +59,7 @@ impl Display for Value {
                 Ok(())
             }
             Value::Nil => write!(f, "nil"),
-            Value::Function(fun) => match *fun {
+            Value::Function(fun) => match fun {
                 Function::UserFn { params: _, body: _, env: _ } => write!(f, "<fn>"),
                 Function::NativeFn { arity: _, call: _ } => write!(f, "<native fn>"),
             },
