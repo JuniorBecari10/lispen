@@ -4,7 +4,7 @@ A Lisp-like programming language written in Rust.
 
 ## Syntax
 
-Lispen follows the same syntax as some List dialects:
+Lispen follows the same syntax as some Lisp dialects:
 
 ```lisp
 (println "Hello World")
